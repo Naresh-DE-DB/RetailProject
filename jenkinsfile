@@ -2,7 +2,6 @@ pipeline {
     agent any
     
     environment {
-        LABS = credentials('labcreds')
         JAVA_HOME = '/opt/bitnami/java'  // Set your JAVA_HOME path here.
         PATH = "${env.JAVA_HOME}/bin:${env.PATH}"  // Add Java binaries to PATH
     }
@@ -41,14 +40,19 @@ pipeline {
         }
         stage('Package') {
             steps {
-                // Create the zip file but exclude the venv directory
-                sh 'zip -r retailproject.zip . -x "retail_pipeline_venv/*"'
+                script {
+                    // Install system zip utility and create zip file excluding virtual environments and caches
+                    sh 'sudo apt-get update && sudo apt-get install -y zip'
+                    sh 'zip -r retailproject.zip . -x "retail_pipeline_venv/*" ".git/*" ".pytest_cache/*"'
+                }
             }
         }
         stage('Deploy') {
             steps {
-                // Add deployment steps here (e.g., deploy to a server or cloud)
-                sh 'sshpass -p $LABS_PSW scp -o StrictHostKeyChecking=no -r retailproject.zip $LABS_USR@g02.itversity.com:/home/itv027071/retailproject'
+                // Securely bind Jenkins labcreds to LABS_USR and LABS_PSW variables
+                withCredentials([usernamePassword(credentialsId: 'labcreds', usernameVariable: 'LABS_USR', passwordVariable: 'LABS_PSW')]) {
+                    sh 'sshpass -p $LABS_PSW scp -o StrictHostKeyChecking=no -r retailproject.zip $LABS_USR@g02.itversity.com:/home/$LABS_USR/retailproject'
+                }
             }
         }
     }
