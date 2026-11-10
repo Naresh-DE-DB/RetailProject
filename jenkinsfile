@@ -41,9 +41,21 @@ pipeline {
         stage('Package') {
             steps {
                 script {
-                    // Install system zip utility and create zip file excluding virtual environments and caches
-                    sh 'sudo apt-get update && sudo apt-get install -y zip'
-                    sh 'zip -r retailproject.zip . -x "retail_pipeline_venv/*" ".git/*" ".pytest_cache/*"'
+                    // Create the zip file securely using Python to avoid missing system zip packages
+                    sh '''./retail_pipeline_venv/bin/python -c "
+import os, zipfile
+zip_name = 'retailproject.zip'
+exclude_dirs = {'retail_pipeline_venv', '.venv', '.git', '.pytest_cache'}
+with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zipf:
+    for root, dirs, files in os.walk('.'):
+        dirs[:] = [d for d in dirs if d not in exclude_dirs]
+        for file in files:
+            full_path = os.path.join(root, file)
+            if os.path.basename(full_path) == zip_name:
+                continue
+            zipf.write(full_path, os.path.relpath(full_path, '.'))
+print('Successfully created retailproject.zip')
+"'''
                 }
             }
         }
