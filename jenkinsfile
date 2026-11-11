@@ -63,7 +63,7 @@ print('Successfully created retailproject.zip')
             steps {
                 // Securely bind Jenkins labcreds to LABS_USR and LABS_PSW variables
                 withCredentials([usernamePassword(credentialsId: 'labcreds', usernameVariable: 'LABS_USR', passwordVariable: 'LABS_PSW')]) {
-                    sh 'sshpass -p $LABS_PSW scp -o StrictHostKeyChecking=no -r retailproject.zip $LABS_USR@g02.itversity.com:/home/$LABS_USR/retailproject'
+                    sh 'sshpass -p $LABS_PSW scp -o StrictHostKeyChecking=no -r retailproject.zip $LABS_USR@g02.itversity.com:/home/itv027071/retailproject'
                 }
             }
         }
